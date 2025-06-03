@@ -1,0 +1,14 @@
+{
+    "/prediction": {
+        "error": "Failed to get response"
+    },
+    "/scoring": {
+        "error": "Failed to get response"
+    },
+    "/summarystats": {
+        "error": "Failed to get response"
+    },
+    "/diagnostics": {
+        "error": "Failed to get response"
+    }
+}

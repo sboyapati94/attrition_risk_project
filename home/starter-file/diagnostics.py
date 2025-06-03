@@ -7,31 +7,34 @@ import pickle
 import subprocess
 
 ##################Load config.json and get environment variables
-with open('config.json','r') as f:
+CURRENT_DIR = os.path.dirname(os.path.abspath(__file__))
+with open(os.path.join(CURRENT_DIR, 'config.json'), 'r') as f:
     config = json.load(f) 
 
-dataset_csv_path = os.path.join(config['output_folder_path']) 
-test_data_path = os.path.join(config['test_data_path']) 
-prod_deployment_path = os.path.join(config['prod_deployment_path'])
+dataset_csv_path = os.path.join(CURRENT_DIR, config['output_folder_path']) 
+test_data_path = os.path.join(CURRENT_DIR, config['test_data_path']) 
+prod_deployment_path = os.path.join(CURRENT_DIR, config['prod_deployment_path'])
 
 ##################Function to get model predictions
 def model_predictions(dataset=None):
     """Get predictions from deployed model"""
-    # If no dataset provided, use test data
-    if dataset is None:
-        dataset = pd.read_csv(os.path.join(test_data_path, "testdata.csv"))
-    
-    # Load the deployed model
-    model_path = os.path.join(prod_deployment_path, "trainedmodel.pkl")
-    with open(model_path, 'rb') as f:
-        model = pickle.load(f)
-    
-    # Extract features
-    X = dataset[['lastmonth_activity', 'lastyear_activity', 'number_of_employees']]
-    
-    # Make predictions
-    predictions = model.predict(X)
-    return predictions.tolist()
+    try:
+        # If no dataset provided, use test data
+        if dataset is None:
+            dataset = pd.read_csv(os.path.join(test_data_path, "testdata.csv"))
+            
+        # Load model
+        model_path = os.path.join(prod_deployment_path, "trainedmodel.pkl")
+        with open(model_path, 'rb') as f:
+            model = pickle.load(f)
+            
+        # Get predictions
+        X = dataset.drop(['corporation', 'exited'], axis=1)
+        predictions = model.predict(X)
+        return predictions
+    except Exception as e:
+        print(f"Error in model_predictions: {str(e)}")
+        raise
 
 ##################Function to get summary statistics
 def dataframe_summary():
