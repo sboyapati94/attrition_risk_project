@@ -7,29 +7,23 @@ import pickle
 import json
 import os
 import logging
+from scoring import score_model
+from diagnostics import model_predictions, dataframe_summary, execution_time, missing_data, outdated_packages_list
 
 # Set up logging
 logging.basicConfig(level=logging.DEBUG,
                    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
 
-try:
-    from scoring import score_model
-    from diagnostics import model_predictions, dataframe_summary, execution_time, missing_data, outdated_packages_list
-except Exception as e:
-    logger.error(f"Error importing modules: {str(e)}")
-    logger.error(traceback.format_exc())
-    raise
-
 ######################Set up variables for use in our script
 app = Flask(__name__)
 
-# Get the absolute path of the current directory
-CURRENT_DIR = os.path.dirname(os.path.abspath(__file__))
+# Get the absolute path of the directory containing the script
+ROOT_DIR = os.path.dirname(os.path.abspath(__file__))
 
 try:
     # Load config
-    with open(os.path.join(CURRENT_DIR, 'config.json'), 'r') as f:
+    with open(os.path.join(ROOT_DIR, 'config.json'), 'r') as f:
         config = json.load(f)
     logger.info("Successfully loaded config file")
 except Exception as e:
@@ -41,17 +35,25 @@ def home():
     """Root endpoint to verify API is running"""
     return "Attrition Risk Assessment API is running!"
 
-@app.route("/prediction", methods=['GET'])
+@app.route("/prediction", methods=['GET', 'POST'])
 def predict():        
     """Return model predictions for test data"""
     try:
-        test_data_path = os.path.join(CURRENT_DIR, config['test_data_path'], "testdata.csv")
+        # Use test data by default
+        test_data_path = os.path.join(ROOT_DIR, config['test_data_path'], "testdata.csv")
         logger.info(f"Loading test data from {test_data_path}")
         data = pd.read_csv(test_data_path)
+        
+        # If data is provided in the request, use that instead
+        if request.json:
+            logger.info("Using data from request")
+            data = pd.DataFrame(request.json)
+            
         preds = model_predictions(data)
         return jsonify({"predictions": preds.tolist()}), 200
     except Exception as e:
         logger.error(f"Error in prediction endpoint: {str(e)}")
+        logger.error(f"Traceback: {traceback.format_exc()}")
         return jsonify({"error": str(e)}), 400
 
 @app.route("/scoring", methods=['GET'])
@@ -62,6 +64,7 @@ def scoring():
         return jsonify({"f1_score": float(score)}), 200
     except Exception as e:
         logger.error(f"Error in scoring endpoint: {str(e)}")
+        logger.error(f"Traceback: {traceback.format_exc()}")
         return jsonify({"error": str(e)}), 400
 
 @app.route("/summarystats", methods=['GET'])
@@ -72,6 +75,7 @@ def stats():
         return jsonify({"summary_statistics": summary}), 200
     except Exception as e:
         logger.error(f"Error in summary stats endpoint: {str(e)}")
+        logger.error(f"Traceback: {traceback.format_exc()}")
         return jsonify({"error": str(e)}), 400
 
 @app.route("/diagnostics", methods=['GET'])
@@ -89,16 +93,9 @@ def diagnostics():
         }), 200
     except Exception as e:
         logger.error(f"Error in diagnostics endpoint: {str(e)}")
+        logger.error(f"Traceback: {traceback.format_exc()}")
         return jsonify({"error": str(e)}), 400
 
-def main():
-    logger.info("Starting Flask server...")
-    try:
-        app.run(host='0.0.0.0', port=8000, debug=True)
-    except Exception as e:
-        logger.error(f"Error starting Flask server: {str(e)}")
-        logger.error(traceback.format_exc())
-        sys.exit(1)
-
 if __name__ == '__main__':
-    main()
+    logger.info("Starting Flask server...")
+    app.run(host='0.0.0.0', port=8000, debug=True)

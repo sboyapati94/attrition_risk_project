@@ -1,15 +1,9 @@
 {
     "/prediction": {
-        "predictions": [
-            0,
-            1,
-            1,
-            0,
-            1
-        ]
+        "error": "Failed to get response"
     },
     "/scoring": {
-        "f1_score": 0.3333333333333333
+        "error": "Failed to get response"
     },
     "/summarystats": {
         "summary_statistics": [
@@ -26,8 +20,8 @@
     },
     "/diagnostics": {
         "execution_time": [
-            0.7028440980357118,
-            2.2327157339896075
+            0.7818931890069507,
+            2.2807580929948017
         ],
         "missing_data": [
             0.0,

@@ -1,7 +1,0 @@
-{
-  "input_folder_path": "/Users/sagar/Downloads/attrition_risk_project/home/sourcedata",
-  "output_folder_path": "/Users/sagar/Downloads/attrition_risk_project/home/starter-file/ingesteddata",
-  "test_data_path": "/Users/sagar/Downloads/attrition_risk_project/home/starter-file/testdata",
-  "output_model_path": "/Users/sagar/Downloads/attrition_risk_project/home/starter-file/practicemodels",
-  "prod_deployment_path": "/Users/sagar/Downloads/attrition_risk_project/home/starter-file/production_deployment"
-}

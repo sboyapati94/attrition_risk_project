@@ -9,15 +9,16 @@ import json
 import os
 from diagnostics import model_predictions
 
-
+# Get the absolute path of the directory containing the script
+ROOT_DIR = os.path.dirname(os.path.abspath(__file__))
 
 ###############Load config.json and get path variables
-with open('config.json','r') as f:
+with open(os.path.join(ROOT_DIR, 'config.json'),'r') as f:
     config = json.load(f) 
 
-dataset_csv_path = os.path.join(config['output_folder_path'])
-test_data_path = os.path.join(config['test_data_path'])
-output_model_path = os.path.join(config['output_model_path'])
+dataset_csv_path = os.path.join(ROOT_DIR, config['output_folder_path'])
+test_data_path = os.path.join(ROOT_DIR, config['test_data_path'])
+output_model_path = os.path.join(ROOT_DIR, config['output_model_path'])
 
 
 
