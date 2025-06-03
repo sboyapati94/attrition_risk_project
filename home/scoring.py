@@ -30,14 +30,16 @@ def score_model(model_path=None):
     try:
         # Load test data
         test_data = pd.read_csv(os.path.join(test_data_path, 'testdata.csv'))
+        logger.info(f"Loaded test data from {os.path.join(test_data_path, 'testdata.csv')}")
         
         # Load model from production deployment if not specified
         if model_path is None:
             model_path = os.path.join(prod_deployment_path, 'trainedmodel.pkl')
-            
+        
         # Load model
         with open(model_path, 'rb') as f:
             model = pickle.load(f)
+        logger.info(f"Loaded model from {model_path}")
             
         # Make predictions
         X_test = test_data.drop(['corporation', 'exited'], axis=1)
@@ -48,11 +50,12 @@ def score_model(model_path=None):
         f1 = metrics.f1_score(y_test, predictions)
         logger.info(f"Calculated F1 score: {f1}")
         
-        # Save score
-        score_path = os.path.join(model_path, 'latestscore.txt')
+        # Save score to output model path
+        score_path = os.path.join(ROOT_DIR, config['output_model_path'], 'latestscore.txt')
         os.makedirs(os.path.dirname(score_path), exist_ok=True)
         with open(score_path, 'w') as f:
             f.write(str(f1))
+        logger.info(f"Saved score to {score_path}")
             
         return f1
     except Exception as e:

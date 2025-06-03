@@ -34,12 +34,12 @@ def check_api_available(url, timeout=30):
         time.sleep(2)
     return False
 
-def save_api_responses(responses):
-    """Save API responses to apireturns.txt"""
+def save_api_responses(responses, config, suffix=""):
+    """Save API responses to file"""
     output_model_path = os.path.join(CURRENT_DIR, config['output_model_path'])
     os.makedirs(output_model_path, exist_ok=True)
     
-    output_file = os.path.join(output_model_path, 'apireturns.txt')
+    output_file = os.path.join(output_model_path, f'apireturns{suffix}.txt')
     with open(output_file, 'w') as f:
         json.dump(responses, f, indent=4)
     print(f"API responses saved to {output_file}")
@@ -77,8 +77,9 @@ if __name__ == "__main__":
             print(f"Failed to get response from {endpoint}")
             responses[endpoint] = {"error": "Failed to get response"}
 
-    # Save responses to file
-    save_api_responses(responses)
+    # Save responses to both files
+    save_api_responses(responses, config)  # Original file
+    save_api_responses(responses, config, "2")  # Second file
     print("\nAPI testing completed!")
 
 

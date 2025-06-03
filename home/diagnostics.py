@@ -5,6 +5,11 @@ import os
 import json
 import pickle
 import subprocess
+import logging
+
+# Set up logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 # Get the absolute path of the directory containing the script
 ROOT_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -23,11 +28,17 @@ def model_predictions(dataset=None):
     try:
         # If no dataset provided, use test data
         if dataset is None:
-            dataset = pd.read_csv(os.path.join(test_data_path, "testdata.csv"))
+            test_file = os.path.join(test_data_path, "testdata.csv")
+            if not os.path.exists(test_file):
+                raise FileNotFoundError(f"Test data not found at {test_file}")
+            dataset = pd.read_csv(test_file)
             
         # Load model
-        model_path = os.path.join(prod_deployment_path, "trainedmodel.pkl")
-        with open(model_path, 'rb') as f:
+        model_file = os.path.join(prod_deployment_path, "trainedmodel.pkl")
+        if not os.path.exists(model_file):
+            raise FileNotFoundError(f"Model not found at {model_file}")
+            
+        with open(model_file, 'rb') as f:
             model = pickle.load(f)
             
         # Get predictions
@@ -35,56 +46,78 @@ def model_predictions(dataset=None):
         predictions = model.predict(X)
         return predictions
     except Exception as e:
-        print(f"Error in model_predictions: {str(e)}")
+        logger.error(f"Error in model_predictions: {str(e)}", exc_info=True)
         raise
 
 ##################Function to get summary statistics
 def dataframe_summary():
-    df = pd.read_csv(os.path.join(dataset_csv_path, 'finaldata.csv'))
-    numeric_columns = df.select_dtypes(include=[np.number]).columns
-    
-    statistics = []
-    for col in numeric_columns:
-        statistics.extend([
-            df[col].mean(),
-            df[col].median(),
-            df[col].std()
-        ])
-    
-    return statistics
+    try:
+        data_file = os.path.join(dataset_csv_path, 'finaldata.csv')
+        if not os.path.exists(data_file):
+            raise FileNotFoundError(f"Data not found at {data_file}")
+            
+        df = pd.read_csv(data_file)
+        numeric_columns = df.select_dtypes(include=[np.number]).columns
+        
+        statistics = []
+        for col in numeric_columns:
+            statistics.extend([
+                df[col].mean(),
+                df[col].median(),
+                df[col].std()
+            ])
+        return statistics
+    except Exception as e:
+        logger.error(f"Error in dataframe_summary: {str(e)}", exc_info=True)
+        raise
 
 ##################Function to get timings
 def execution_time():
-    timing = []
-    
-    # Time for ingestion
-    starttime = timeit.default_timer()
-    _ = subprocess.run(['python', os.path.join(ROOT_DIR, 'ingestion.py')], capture_output=True)
-    timing.append(timeit.default_timer() - starttime)
-    
-    # Time for training
-    starttime = timeit.default_timer()
-    _ = subprocess.run(['python', os.path.join(ROOT_DIR, 'training.py')], capture_output=True)
-    timing.append(timeit.default_timer() - starttime)
-    
-    return timing
-
-##################Function to check dependencies
-def outdated_packages_list():
-    outdated = subprocess.check_output(['pip', 'list', '--outdated', '--format=json'])
-    return json.loads(outdated)
+    try:
+        timing = []
+        
+        # Time for ingestion
+        starttime = timeit.default_timer()
+        _ = subprocess.run(['python', os.path.join(ROOT_DIR, 'ingestion.py')], capture_output=True)
+        timing.append(timeit.default_timer() - starttime)
+        
+        # Time for training
+        starttime = timeit.default_timer()
+        _ = subprocess.run(['python', os.path.join(ROOT_DIR, 'training.py')], capture_output=True)
+        timing.append(timeit.default_timer() - starttime)
+        
+        return timing
+    except Exception as e:
+        logger.error(f"Error in execution_time: {str(e)}", exc_info=True)
+        raise
 
 ##################Function to get missing data
 def missing_data():
-    df = pd.read_csv(os.path.join(dataset_csv_path, 'finaldata.csv'))
-    na_percents = df.isna().mean()
-    return na_percents.values.tolist()
+    try:
+        data_file = os.path.join(dataset_csv_path, 'finaldata.csv')
+        if not os.path.exists(data_file):
+            raise FileNotFoundError(f"Data not found at {data_file}")
+            
+        df = pd.read_csv(data_file)
+        na_percents = df.isna().mean()
+        return na_percents.values.tolist()
+    except Exception as e:
+        logger.error(f"Error in missing_data: {str(e)}", exc_info=True)
+        raise
+
+##################Function to check dependencies
+def outdated_packages_list():
+    try:
+        outdated = subprocess.check_output(['pip', 'list', '--outdated', '--format=json'])
+        return json.loads(outdated)
+    except Exception as e:
+        logger.error(f"Error in outdated_packages_list: {str(e)}", exc_info=True)
+        raise
 
 if __name__ == '__main__':
     model_predictions()
     dataframe_summary()
     execution_time()
-    outdated_packages_list()
     missing_data()
 
 

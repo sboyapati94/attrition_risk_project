@@ -35,26 +35,22 @@ def home():
     """Root endpoint to verify API is running"""
     return "Attrition Risk Assessment API is running!"
 
-@app.route("/prediction", methods=['GET', 'POST'])
+@app.route("/prediction", methods=['GET'])
 def predict():        
     """Return model predictions for test data"""
     try:
-        # Use test data by default
         test_data_path = os.path.join(ROOT_DIR, config['test_data_path'], "testdata.csv")
         logger.info(f"Loading test data from {test_data_path}")
-        data = pd.read_csv(test_data_path)
-        
-        # If data is provided in the request, use that instead
-        if request.json:
-            logger.info("Using data from request")
-            data = pd.DataFrame(request.json)
+        if not os.path.exists(test_data_path):
+            return jsonify({"error": f"Test data not found at {test_data_path}"}), 404
             
+        data = pd.read_csv(test_data_path)
         preds = model_predictions(data)
-        return jsonify({"predictions": preds.tolist()}), 200
+        return jsonify({"predictions": preds.tolist() if hasattr(preds, 'tolist') else list(preds)}), 200
     except Exception as e:
         logger.error(f"Error in prediction endpoint: {str(e)}")
-        logger.error(f"Traceback: {traceback.format_exc()}")
-        return jsonify({"error": str(e)}), 400
+        logger.error(traceback.format_exc())
+        return jsonify({"error": str(e)}), 500
 
 @app.route("/scoring", methods=['GET'])
 def scoring():        
@@ -64,19 +60,21 @@ def scoring():
         return jsonify({"f1_score": float(score)}), 200
     except Exception as e:
         logger.error(f"Error in scoring endpoint: {str(e)}")
-        logger.error(f"Traceback: {traceback.format_exc()}")
-        return jsonify({"error": str(e)}), 400
+        logger.error(traceback.format_exc())
+        return jsonify({"error": str(e)}), 500
 
 @app.route("/summarystats", methods=['GET'])
 def stats():        
     """Return summary statistics for the ingested data"""
     try:
         summary = dataframe_summary()
+        if summary is None:
+            return jsonify({"error": "No summary statistics available"}), 404
         return jsonify({"summary_statistics": summary}), 200
     except Exception as e:
         logger.error(f"Error in summary stats endpoint: {str(e)}")
-        logger.error(f"Traceback: {traceback.format_exc()}")
-        return jsonify({"error": str(e)}), 400
+        logger.error(traceback.format_exc())
+        return jsonify({"error": str(e)}), 500
 
 @app.route("/diagnostics", methods=['GET'])
 def diagnostics():        
@@ -93,8 +91,8 @@ def diagnostics():
         }), 200
     except Exception as e:
         logger.error(f"Error in diagnostics endpoint: {str(e)}")
-        logger.error(f"Traceback: {traceback.format_exc()}")
-        return jsonify({"error": str(e)}), 400
+        logger.error(traceback.format_exc())
+        return jsonify({"error": str(e)}), 500
 
 if __name__ == '__main__':
     logger.info("Starting Flask server...")
