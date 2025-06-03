@@ -15,18 +15,35 @@ with open('config.json','r') as f:
 dataset_csv_path = os.path.join(config['output_folder_path']) 
 model_path = os.path.join(config['output_model_path']) 
 
+# Create model directory if it doesn't exist
+os.makedirs(model_path, exist_ok=True)
 
 #################Function for training the model
 def train_model():
+    # Read the training data
+    df = pd.read_csv(os.path.join(dataset_csv_path, "finaldata.csv"))
     
-    #use this logistic regression for training
-    LogisticRegression(C=1.0, class_weight=None, dual=False, fit_intercept=True,
+    # Separate features (X) and target (y)
+    X = df[['lastmonth_activity', 'lastyear_activity', 'number_of_employees']]
+    y = df['exited']
+    
+    # Create and train the logistic regression model
+    model = LogisticRegression(C=1.0, class_weight=None, dual=False, fit_intercept=True,
                     intercept_scaling=1, l1_ratio=None, max_iter=100,
-                    multi_class='warn', n_jobs=None, penalty='l2',
+                    multi_class='auto', n_jobs=None, penalty='l2',
                     random_state=0, solver='liblinear', tol=0.0001, verbose=0,
                     warm_start=False)
     
-    #fit the logistic regression to your data
+    # Fit the model
+    model.fit(X, y)
     
-    #write the trained model to your workspace in a file called trainedmodel.pkl
+    # Save the model
+    model_file = os.path.join(model_path, 'trainedmodel.pkl')
+    with open(model_file, 'wb') as f:
+        pickle.dump(model, f)
+    
+    return model
+
+if __name__ == '__main__':
+    train_model()
 
